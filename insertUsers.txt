@@ -1,0 +1,20 @@
+db.users.insert({
+   firstName: "James",
+   lastName: "Chu",
+   joinDate: "03/11/2012",
+   phoneNumber: "781-213-1321"
+});
+
+db.users.insert({
+   firstName: "Bob",
+   lastName: "Chan",
+   joinDate: "01/2/2015",
+   phoneNumber: "857-321-7862"
+ });
+
+ db.users.insert({
+    firstName: "Josh",
+    lastName: "Madison",
+    joinDate: "02/04/2016",
+    phoneNumber: "612-121-9072"
+  });
