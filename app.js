@@ -1,6 +1,8 @@
 var express = require('express');
 var app = express();
 var mongoose = require("mongoose");
+var bodyParser = require('body-parser');
+
 
 var port = 8080;
 var User = require("./model/user");
@@ -10,9 +12,15 @@ mongoose.Promise = global.Promise;
 
 mongoose.connect(db);
 
-app.listen(port, function(){
-  console.log('app listening on port ' + port);
-});
+// User.remove({}, function(err) {
+//    console.log('collection removed');
+// });
+
+app.use(bodyParser.json());
+// allows the use of postman
+app.use(bodyParser.urlencoded({
+  extended:true
+}));
 
 app.get("/",function(req,res){
   res.send("Happy to be here");
@@ -32,41 +40,70 @@ app.get("/users",function(req,res){
 });
 
 
-// User.remove({}, function(err) {
-//    console.log('collection removed');
+app.post('/users',function(req, res){
+  var newUser = new User();
+
+  newUser.firstName = req.body.firstName;
+  newUser.lastName = req.body.lastName;
+  newUser.joinDate = req.body.joinDate;
+  newUser.phoneNumber = req.body.phoneNumber;
+
+  newUser.save(function(err, user){
+    if(err){
+      res.send('error saving user');
+    } else {
+      console.log(user);
+      res.send(user);
+    }
+  });
+});
+
+app.delete('/users/:id',function(req, res){
+  User.findOneAndRemove({
+    _id: req.params.id
+  },function(err, user) {
+    if (err){
+      res.send("Error deleting");
+    } else {
+      console.log(user);
+      res.status(204);
+    }
+  });
+});
+
+User.aggregate([
+      {
+          $project: {
+              month: { $substr: ["$joinDate", 5, 2]}
+          }
+      }, {
+          $group: {
+              _id: "$month",
+              users: {$sum: 1}
+          }
+      }, {$sort: {
+              _id: 1
+         }
+      }
+], function (err, result) {
+  if(err){
+    console.log("An error has occured");
+  } else {
+    console.log(result);
+  }
+});
+
+// User.aggregate({   $group : { _id: "$joinDate", count: {$sum: 1}}})
+// .exec(function(err, result){
+//   if(!err) {
+//     console.log(result);
+//
+//   } else {
+//     console.log("There is a mistake");
+//   }
 // });
 
-// var david = new User({
-//   firstName: "David",
-//   lastName: "Ho",
-//   joinDate: "01/09/2000",
-//   phoneNumber: "832-132-1432"
-// });
-//
-// david.save(function (err, david) {
-//   if (err) return console.log(err);
-//   console.log(david)
-//   console.log("Saved successfully");
-// });
-//
-// var amy = new User({
-//   firstName: "Amy",
-//   lastName: "Tai",
-//   joinDate: "02/10/2010",
-//   phoneNumber: "781-231-1232"
-// });
-//
-// amy.save(function (err, amy) {
-//   if (err) return console.log(err);
-//   console.log(amy);
-//   console.log("Saved successfully");
-// });
-//
-//
-// User.find(function (err, users) {
-//   if (err) return console.error(err);
-//   console.log("Here are the users " + users);
-// });
-//
-// console.log(david.firstName);
-// console.log(amy.firstName);
+
+app.listen(port, function(){
+  console.log('app listening on port ' + port);
+});
