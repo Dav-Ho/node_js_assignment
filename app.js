@@ -8,8 +8,6 @@ var port = 8080;
 var User = require("./model/user");
 
 var db = 'mongodb://localhost/user_data';
-mongoose.Promise = global.Promise;
-
 mongoose.connect(db);
 
 // User.remove({}, function(err) {
@@ -71,37 +69,37 @@ app.delete('/users/:id',function(req, res){
   });
 });
 
-User.aggregate([
-      {
-          $project: {
-              month: { $substr: ["$joinDate", 5, 2]}
-          }
-      }, {
-          $group: {
-              _id: "$month",
-              users: {$sum: 1}
-          }
-      }, {$sort: {
-              _id: 1
-         }
-      }
-], function (err, result) {
-  if(err){
-    console.log("An error has occured");
-  } else {
-    console.log(result);
-  }
+app.get('/months',function(req,res){
+  console.log('Here are the users for Jan, Feb, and March');
+  User.aggregate([
+        {
+            $project: {
+                month: { $substr: ["$joinDate", 5, 2]}
+                //convert to Date and
+            }
+        }, {
+            $group: {
+                _id: "$month",
+                numberofUsers: {$sum: 1}
+            }
+        }, {
+            $match: {
+                _id:{ $lt: "04" } }
+        }, {
+            $sort: {
+                _id: 1
+           }
+        }
+  ], function (err, result) {
+    if(err){
+      res.send("An error has occured");
+    } else {
+      res.json(result);  // display the data
+    }
+  });
 });
 
-// User.aggregate({   $group : { _id: "$joinDate", count: {$sum: 1}}})
-// .exec(function(err, result){
-//   if(!err) {
-//     console.log(result);
-//
-//   } else {
-//     console.log("There is a mistake");
-//   }
-// });
+
 
 
 app.listen(port, function(){
